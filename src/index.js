@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
+import { Skeleton } from 'antd';
 import { Provider } from 'react-redux';
+
 import 'antd/dist/antd.css';
 import './App.css';
 import * as serviceWorker from './serviceWorker';
@@ -9,7 +11,9 @@ import store from 'store';
 
 ReactDOM.render(
   <Provider store={store}>
-    <App />
+    <Suspense fallback={<Skeleton />}>
+      <App />
+    </Suspense>
   </Provider>,
   document.getElementById('root')
 );

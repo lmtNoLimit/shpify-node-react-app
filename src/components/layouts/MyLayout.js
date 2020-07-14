@@ -4,7 +4,7 @@ import { Layout } from 'antd';
 
 import MyMenu from './MyMenu';
 
-const { Header, Content, Footer } = Layout;
+const { Header, Content } = Layout;
 
 const MyLayout = ({ children }) => {
   return (
@@ -18,14 +18,11 @@ const MyLayout = ({ children }) => {
         <Content style={{ margin: '24px 16px 0' }}>
           <div
             className='site-layout-background'
-            style={{ padding: 24, minHeight: '80vh' }}
+            style={{ padding: 24, minHeight: '90vh' }}
           >
             {children}
           </div>
         </Content>
-        <Footer style={{ textAlign: 'center' }}>
-          Ant Design ©2018 Created by Ant UED
-        </Footer>
       </Layout>
     </Layout>
   );

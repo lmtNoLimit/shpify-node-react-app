@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch, shallowEqual } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 import { Table, Tag, Space, Button, PageHeader } from 'antd';
 import { SettingOutlined } from '@ant-design/icons';
 import { PageActions } from 'store/actions';
@@ -43,15 +44,17 @@ const Pages = () => {
         <Space size='middle'>
           <Button
             icon={<SettingOutlined />}
-            // onClick={() => showPageSettingModal(page)}
+            onClick={() => history.push(`pages/${page.id}`)}
           />
         </Space>
       ),
     },
   ];
 
-  const pageState = useSelector((state) => state.pageReducer, shallowEqual);
   const dispatch = useDispatch();
+  const history = useHistory();
+
+  const pageState = useSelector((state) => state.pageReducer, shallowEqual);
 
   useEffect(() => {
     dispatch(PageActions.getPages());

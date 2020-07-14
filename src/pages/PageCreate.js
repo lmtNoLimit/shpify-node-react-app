@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { useHistory } from 'react-router-dom';
+import _ from 'lodash';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import {
   Row,
   Col,
@@ -13,10 +14,10 @@ import {
   Select,
 } from 'antd';
 import { Editor } from 'react-draft-wysiwyg';
-import { _updatePage, _createPage } from 'services/shopifyApi';
+import { _createPage } from 'services/shopifyApi';
 import { PageActions } from 'store/actions';
-import { convertToRaw } from 'draft-js';
-import draftToHtml from 'draftjs-to-html';
+import { EditorState } from 'draft-js';
+import { stateToHTML } from 'draft-js-export-html';
 
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 
@@ -28,66 +29,53 @@ const radioStyle = {
   lineHeight: '30px',
 };
 
-const AddPage = () => {
+const PageCreate = (props) => {
   const dispatch = useDispatch();
   const history = useHistory();
   const pageState = useSelector((state) => state.pageReducer, shallowEqual);
+
+  const [editorState, setEditorState] = useState(EditorState.createEmpty());
+  const [formData, setFormData] = useState({
+    title: '',
+    published: false,
+    template_suffix: null,
+    body_html: editorState,
+  });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     dispatch(PageActions.getPages());
   }, [dispatch]);
 
-  useEffect(() => {
-    console.log(page);
-  });
-
-  const [page, setPage] = useState({
-    title: '',
-    published_at: null,
-    template_suffix: '',
-    body_html: '',
-  });
-
   const handleChange = (e) => {
-    const target = e.target;
-    const value = target.value;
-    setPage({
-      ...page,
-      [target.name]: value,
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
     });
   };
 
   const handleChangeTemplate = (value) => {
-    setPage({
-      ...page,
+    setFormData({
+      ...formData,
       template_suffix: value,
     });
   };
 
   const onEditorStateChange = (editorState) => {
-    setPage({
-      ...page,
-      body_html: editorState,
+    setEditorState(editorState);
+    setFormData({
+      ...formData,
+      body_html: stateToHTML(editorState.getCurrentContent()),
     });
   };
 
   const handleSubmit = async () => {
     try {
-      const data = {
-        ...page,
-        body_html: draftToHtml(
-          convertToRaw(page.body_html.getCurrentContent())
-        ),
-      };
-      console.log(data);
-      if (pageState.page.id) {
-        await _updatePage(pageState.page.id, data);
-      } else {
-        await _createPage(data);
-      }
-      dispatch(PageActions.getPages());
+      setLoading(true);
+      await _createPage(formData);
       history.push('/pages');
     } catch (error) {
+      setLoading(false);
       console.log(error?.response);
     }
   };
@@ -95,15 +83,23 @@ const AddPage = () => {
   const { pages } = pageState;
 
   return (
-    <Form layout='vertical' initialValues={{}} onFinish={handleSubmit}>
+    <Form layout='vertical' onFinish={handleSubmit}>
       <Row gutter={24}>
         <Col xs={24} md={14}>
           <Card title='Page detail' bordered={false}>
-            <Form.Item label='Title' name='title' rules={[{ required: true }]}>
-              <Input name='title' value={page.title} onChange={handleChange} />
+            <Form.Item
+              label='Title'
+              name='title'
+              rules={[{ required: true, message: 'Title is required' }]}
+            >
+              <Input
+                name='title'
+                onChange={handleChange}
+                value={formData.title}
+              />
             </Form.Item>
             <Editor
-              editorState={page.body_html}
+              editorState={editorState}
               editorClassName='wysiwyg-editor'
               onEditorStateChange={onEditorStateChange}
             />
@@ -112,22 +108,14 @@ const AddPage = () => {
         <Col xs={24} md={8}>
           <Card title='Visibility' bordered={false}>
             <Radio.Group
-              name='published_at'
+              name='published'
               onChange={handleChange}
-              // value={page.published}
+              defaultValue={false}
             >
-              <Radio
-                style={radioStyle}
-                value={Date()}
-                checked={page?.published_at?.length > 0}
-              >
+              <Radio style={radioStyle} value={true}>
                 Visible
               </Radio>
-              <Radio
-                style={radioStyle}
-                value={''}
-                checked={page.published === ''}
-              >
+              <Radio style={radioStyle} value={false}>
                 Hidden
               </Radio>
             </Radio.Group>
@@ -138,10 +126,10 @@ const AddPage = () => {
               onChange={handleChangeTemplate}
               style={{ width: '100%' }}
               name='template_suffix'
-              value={page?.template_suffix || 'page'}
+              value={formData.template_suffix}
             >
               <Option value='page'>page</Option>
-              {pages.map((page) => (
+              {_.uniqBy(pages, 'template_suffix').map((page) => (
                 <Option key={page.id} value={page.template_suffix}>
                   {page.template_suffix}
                 </Option>
@@ -152,7 +140,7 @@ const AddPage = () => {
       </Row>
       <Divider />
       <div style={{ textAlign: 'center' }}>
-        <Button type='primary' htmlType='submit' onClick={handleSubmit}>
+        <Button type='primary' htmlType='submit' loading={loading}>
           Create
         </Button>
       </div>
@@ -160,4 +148,4 @@ const AddPage = () => {
   );
 };
 
-export default AddPage;
+export default PageCreate;

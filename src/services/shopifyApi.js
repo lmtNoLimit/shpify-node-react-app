@@ -10,19 +10,22 @@ export const _createPage = (data) => {
   });
 };
 
-export const _deletePage = (id) => {
-  return axios({
-    method: 'DELETE',
-    url: `/shopify/api/pages/${id}.json`,
-  });
-};
-
 export const _updatePage = (id, data) => {
   return axios({
     method: 'PUT',
     url: `/shopify/api/pages/${id}.json`,
     data: {
       page: data,
+    },
+  });
+};
+
+export const _updateProduct = (id, data) => {
+  return axios({
+    method: 'PUT',
+    url: `/shopify/api/products/${id}.json`,
+    data: {
+      product: data,
     },
   });
 };
