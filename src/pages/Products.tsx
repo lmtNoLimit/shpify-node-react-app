@@ -1,10 +1,16 @@
 import React, { useEffect } from 'react';
-import { useSelector, useDispatch, shallowEqual } from 'react-redux';
+import {
+  useSelector,
+  useDispatch,
+  shallowEqual,
+  RootStateOrAny,
+} from 'react-redux';
+import { useHistory } from 'react-router-dom';
 import { Table, Space, Button, PageHeader } from 'antd';
 import { SettingOutlined } from '@ant-design/icons';
 import { ProductActions } from 'store/actions';
 
-const Products = () => {
+const Products: React.FC<Product> = () => {
   const columns = [
     {
       title: 'ID',
@@ -29,11 +35,11 @@ const Products = () => {
     {
       title: 'Action',
       key: 'action',
-      render: (page) => (
+      render: (product: Product) => (
         <Space size='middle'>
           <Button
             icon={<SettingOutlined />}
-            // onClick={() => showPageSettingModal(page)}
+            onClick={() => history.push(`products/${product.id}`)}
           />
         </Space>
       ),
@@ -41,10 +47,11 @@ const Products = () => {
   ];
 
   const productState = useSelector(
-    (state) => state.productReducer,
+    (state: RootStateOrAny) => state.productReducer,
     shallowEqual
   );
   const dispatch = useDispatch();
+  const history = useHistory();
 
   useEffect(() => {
     dispatch(ProductActions.getProducts());
@@ -53,7 +60,7 @@ const Products = () => {
   const { products, loading } = productState;
   const data =
     products &&
-    products.map((product) => ({
+    products.map((product: Product) => ({
       key: product.id,
       ...product,
     }));

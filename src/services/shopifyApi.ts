@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const _createPage = (data) => {
+export const _createPage = (data: object) => {
   return axios({
     method: 'POST',
     url: '/shopify/api/pages.json',
@@ -10,7 +10,7 @@ export const _createPage = (data) => {
   });
 };
 
-export const _updatePage = (id, data) => {
+export const _updatePage = (id: string, data: object) => {
   return axios({
     method: 'PUT',
     url: `/shopify/api/pages/${id}.json`,
@@ -20,7 +20,7 @@ export const _updatePage = (id, data) => {
   });
 };
 
-export const _updateProduct = (id, data) => {
+export const _updateProduct = (id: string, data: object) => {
   return axios({
     method: 'PUT',
     url: `/shopify/api/products/${id}.json`,

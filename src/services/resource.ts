@@ -1,7 +1,7 @@
 import axios from 'axios';
 // import { getAuthToken } from './cookiesService';
 
-export const makeRequest = (req) => {
+export const makeRequest = (req: any) => {
   return axios({
     ...req,
     auth: {
@@ -11,33 +11,33 @@ export const makeRequest = (req) => {
   });
 };
 
-const Resource = (resourceName) => {
+const Resource = (resourceName: string) => {
   let url = `/shopify/api/${resourceName}`;
   return {
-    GET_MANY: (params) =>
+    GET_MANY: (params: string) =>
       makeRequest({
         method: 'GET',
         url: `${url}.json`,
         params,
       }),
-    GET_ONE: (id) =>
+    GET_ONE: (id: string) =>
       makeRequest({
         method: 'GET',
         url: `${url}/${id}.json`,
       }),
-    CREATE: (data) =>
+    CREATE: (data: object) =>
       makeRequest({
         method: 'POST',
         url: `${url}.json`,
         data,
       }),
-    UPDATE: (id, data) =>
+    UPDATE: (id: string, data: object) =>
       makeRequest({
         method: 'PUT',
         url: `${url}/${id}.json`,
         data,
       }),
-    DELETE: (id) =>
+    DELETE: (id: string) =>
       makeRequest({
         method: 'DELETE',
         url: `${url}/${id}.json`,

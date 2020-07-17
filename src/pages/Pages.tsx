@@ -1,12 +1,17 @@
 import React, { useEffect } from 'react';
-import { useSelector, useDispatch, shallowEqual } from 'react-redux';
+import {
+  useSelector,
+  useDispatch,
+  shallowEqual,
+  RootStateOrAny,
+} from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { Table, Tag, Space, Button, PageHeader } from 'antd';
 import { SettingOutlined } from '@ant-design/icons';
 import { PageActions } from 'store/actions';
 import { Link } from 'react-router-dom';
 
-const Pages = () => {
+const Pages: React.FC = () => {
   const columns = [
     {
       title: 'Title',
@@ -27,7 +32,7 @@ const Pages = () => {
       title: 'Status',
       dataIndex: 'published_at',
       key: 'published_at',
-      render: (status) => {
+      render: (status: string) => {
         const text = status ? 'Published' : 'Unpublished';
         const color = status ? 'success' : 'default';
         return (
@@ -40,7 +45,7 @@ const Pages = () => {
     {
       title: 'Action',
       key: 'action',
-      render: (page) => (
+      render: (page: Page) => (
         <Space size='middle'>
           <Button
             icon={<SettingOutlined />}
@@ -54,7 +59,10 @@ const Pages = () => {
   const dispatch = useDispatch();
   const history = useHistory();
 
-  const pageState = useSelector((state) => state.pageReducer, shallowEqual);
+  const pageState = useSelector(
+    (state: RootStateOrAny) => state.pageReducer,
+    shallowEqual
+  );
 
   useEffect(() => {
     dispatch(PageActions.getPages());
@@ -63,7 +71,7 @@ const Pages = () => {
   const { pages, loading } = pageState;
   const data =
     pages &&
-    pages.map((page) => ({
+    pages.map((page: any) => ({
       key: page.id,
       ...page,
     }));

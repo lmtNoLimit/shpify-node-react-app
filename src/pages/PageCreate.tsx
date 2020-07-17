@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
-import { useDispatch, useSelector, shallowEqual } from 'react-redux';
+import _ from 'lodash';
+import {
+  useDispatch,
+  useSelector,
+  shallowEqual,
+  RootStateOrAny,
+} from 'react-redux';
 import {
   Row,
   Col,
@@ -11,16 +17,16 @@ import {
   Divider,
   Radio,
   Select,
+  notification,
 } from 'antd';
 import { Editor } from 'react-draft-wysiwyg';
-import { _updatePage } from 'services/shopifyApi';
+import { _createPage } from 'services/shopifyApi';
 import { PageActions } from 'store/actions';
-import { EditorState, ContentState, convertFromHTML } from 'draft-js';
+import { EditorState } from 'draft-js';
 import { stateToHTML } from 'draft-js-export-html';
-import _ from 'lodash';
-import axios from 'axios';
 
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
+import { RadioChangeEvent } from 'antd/lib/radio';
 
 const { Option } = Select;
 
@@ -30,60 +36,50 @@ const radioStyle = {
   lineHeight: '30px',
 };
 
-const PageDetail = (props) => {
+interface FormData {
+  title: string;
+  published: boolean;
+  template_suffix: string;
+  body_html: any;
+}
+
+const PageCreate: React.FC<Page> = () => {
   const dispatch = useDispatch();
   const history = useHistory();
-  const pageState = useSelector((state) => state.pageReducer, shallowEqual);
-  const { pages } = pageState;
+  const pageState = useSelector(
+    (state: RootStateOrAny) => state.pageReducer,
+    shallowEqual
+  );
 
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
-
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     published: false,
-    template_suffix: 'page',
-    body_html: '',
+    template_suffix: '',
+    body_html: editorState,
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     dispatch(PageActions.getPages());
-    // dispatch(PageActions.getPage(props.match.params.id));
-    axios({
-      method: 'GET',
-      url: `/shopify/api/pages/${props.match.params.id}.json`,
-    }).then((res) => {
-      const { page } = res.data;
-      console.log(page);
-      setFormData({
-        title: page.title,
-        published: page?.published_at?.length > 0,
-        template_suffix: page.template_suffix,
-        body_html: page.body_html,
-      });
-      page.body_html &&
-        setEditorState(
-          EditorState.createWithContent(
-            ContentState.createFromBlockArray(convertFromHTML(page.body_html))
-          )
-        );
-    });
-  }, [dispatch, props.match.params.id]);
+  }, [dispatch]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.FormEvent<HTMLInputElement>) => {
+    const { name, value } = e.currentTarget;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
   };
 
-  const handleChangeTemplate = (value) => {
+  const handleChangeTemplate = (value: string) => {
     setFormData({
       ...formData,
       template_suffix: value,
     });
   };
 
-  const onEditorStateChange = (editorState) => {
+  const onEditorStateChange = (editorState: EditorState) => {
     setEditorState(editorState);
     setFormData({
       ...formData,
@@ -92,21 +88,24 @@ const PageDetail = (props) => {
   };
 
   const handleSubmit = async () => {
-    console.log(formData);
     try {
-      await _updatePage(props.match.params.id, formData);
+      setLoading(true);
+      await _createPage(formData);
       history.push('/pages');
     } catch (error) {
+      setLoading(false);
       console.log(error?.response);
+      notification.error({
+        message: 'Error',
+        description: 'Failed to create page. Please try again',
+      });
     }
   };
 
+  const { pages } = pageState;
+
   return (
-    <Form
-      layout='vertical'
-      onFinish={handleSubmit}
-      initialValues={{ ...formData }}
-    >
+    <Form layout='vertical' onFinish={handleSubmit}>
       <Row gutter={24}>
         <Col xs={24} md={14}>
           <Card title='Page detail' bordered={false}>
@@ -117,8 +116,8 @@ const PageDetail = (props) => {
             >
               <Input
                 name='title'
-                value={formData.title}
                 onChange={handleChange}
+                value={formData.title}
               />
             </Form.Item>
             <Editor
@@ -132,8 +131,10 @@ const PageDetail = (props) => {
           <Card title='Visibility' bordered={false}>
             <Radio.Group
               name='published'
-              onChange={handleChange}
-              value={!!formData.published}
+              onChange={(e: RadioChangeEvent) =>
+                setFormData({ ...formData, published: e.target.value })
+              }
+              defaultValue={false}
             >
               <Radio style={radioStyle} value={true}>
                 Visible
@@ -145,13 +146,14 @@ const PageDetail = (props) => {
           </Card>
           <Card title='Template' bordered={false} style={{ marginTop: '24px' }}>
             <Select
+              defaultValue='page'
               onChange={handleChangeTemplate}
               style={{ width: '100%' }}
-              name='template_suffix'
+              // name='template_suffix'
               value={formData.template_suffix}
             >
               <Option value='page'>page</Option>
-              {_.uniqBy(pages, 'template_suffix').map((page) => (
+              {_.uniqBy(pages, 'template_suffix').map((page: any) => (
                 <Option key={page.id} value={page.template_suffix}>
                   {page.template_suffix}
                 </Option>
@@ -162,12 +164,12 @@ const PageDetail = (props) => {
       </Row>
       <Divider />
       <div style={{ textAlign: 'center' }}>
-        <Button type='primary' htmlType='submit'>
-          Save changes
+        <Button type='primary' htmlType='submit' loading={loading}>
+          Create
         </Button>
       </div>
     </Form>
   );
 };
 
-export default PageDetail;
+export default PageCreate;

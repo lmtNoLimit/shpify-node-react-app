@@ -6,7 +6,11 @@ import MyMenu from './MyMenu';
 
 const { Header, Content } = Layout;
 
-const MyLayout = ({ children }) => {
+type Props = {
+  children: React.Component;
+};
+
+const MyLayout: Function = ({ children }: Props) => {
   return (
     <Layout>
       <MyMenu />
